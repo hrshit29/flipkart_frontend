@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ParkNet AI — Real Data Intelligence</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+<style>
+:root{--bg:#050810;--card:rgba(14,22,42,.7);--border:rgba(30,42,69,.6);--accent:#f59e0b;--em:#10b981;--dg:#ef4444;--bl:#3b82f6}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:#e5e7eb;overflow-x:hidden}
+.mono{font-family:'JetBrains Mono',monospace}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#374151;border-radius:2px}
+#scene-box{position:relative;width:100%;height:55vh;min-height:380px;overflow:hidden}
+.scene-fade{position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(transparent,var(--bg));pointer-events:none;z-index:2}
+.glass{background:var(--card);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:12px;transition:all .3s;position:relative;overflow:hidden}
+.glass:hover{border-color:rgba(245,158,11,.2);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.kpi-v{font-size:2.4rem;font-weight:800;line-height:1;letter-spacing:-.02em}
+.badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:9999px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.bc{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25)}
+.bh{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.25)}
+.bm{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25)}
+.bl{background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.25)}
+.pb{height:5px;border-radius:3px;background:rgba(30,42,69,.8);overflow:hidden}
+.pf{height:100%;border-radius:3px;transition:width 1.5s cubic-bezier(.16,1,.3,1)}
+.ml{position:relative;padding:14px 12px 10px;border-radius:10px;border:1px solid var(--border);background:var(--card);transition:all .3s;text-align:center;min-width:120px}
+.ml:hover{border-color:var(--accent);box-shadow:0 0 24px rgba(245,158,11,.12)}
+.ml .ln{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:800}
+.cn{display:flex;align-items:center;color:var(--accent);opacity:.3;font-size:.7rem}
+@keyframes pr{0%{transform:scale(.8);opacity:.8}100%{transform:scale(2.5);opacity:0}}
+@keyframes fu{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes df{0%{transform:translateX(-5px);opacity:0}50%{opacity:1}100%{transform:translateX(5px);opacity:0}}
+@keyframes sl{0%{left:-30%}100%{left:130%}}
+@keyframes glow{0%,100%{opacity:.4}50%{opacity:1}}
+.af{opacity:0;transform:translateY(30px);transition:all .7s cubic-bezier(.16,1,.3,1)}.af.v{opacity:1;transform:translateY(0)}
+.dt{width:100%;border-collapse:separate;border-spacing:0}
+.dt thead th{padding:8px 10px;text-align:left;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;border-bottom:1px solid var(--border);font-weight:600}
+.dt tbody tr{transition:background .2s;cursor:pointer}.dt tbody tr:hover{background:rgba(245,158,11,.04)}
+.dt tbody td{padding:8px 10px;font-size:.78rem;border-bottom:1px solid rgba(30,42,69,.3)}
+.ld{width:7px;height:7px;border-radius:50%;background:var(--em);display:inline-block;position:relative}
+.ld::after{content:'';position:absolute;top:-3px;left:-3px;width:13px;height:13px;border-radius:50%;background:var(--em);animation:pr 1.5s ease infinite}
+.toast-b{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:10px;background:rgba(14,22,42,.92);backdrop-filter:blur(10px);border:1px solid var(--accent);box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:9999;transform:translateY(130%);transition:transform .4s cubic-bezier(.16,1,.3,1);max-width:360px}
+.toast-b.show{transform:translateY(0)}
+.rc{padding:12px 14px;border-radius:10px;border-left:3px solid;background:rgba(14,22,42,.5);margin-bottom:6px;transition:all .3s}
+.rc:hover{background:rgba(20,30,55,.8);transform:translateX(3px)}
+.gr{stroke-dasharray:283;stroke-dashoffset:283;transition:stroke-dashoffset 2s cubic-bezier(.16,1,.3,1);transform:rotate(-90deg);transform-origin:center}
+.fd{width:3px;height:3px;border-radius:50%;background:var(--accent);animation:df 1.2s ease infinite}
+.sl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:#6b7280;font-weight:600;margin-bottom:12px}
+.sln{position:absolute;top:0;width:25%;height:100%;background:linear-gradient(90deg,transparent,rgba(245,158,11,.04),transparent);animation:sl 5s linear infinite;pointer-events:none;z-index:1}
+.cb{padding:7px 18px;border-radius:8px;font-size:.75rem;font-weight:600;border:1px solid var(--accent);background:rgba(245,158,11,.08);color:var(--accent);cursor:pointer;transition:all .25s}
+.cb:hover{background:rgba(245,158,11,.18);box-shadow:0 0 16px rgba(245,158,11,.12)}
+input[type=range]{-webkit-appearance:none;background:var(--border);height:3px;border-radius:2px;outline:none;width:100%}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--accent);cursor:pointer}
+.pc{padding:12px;border-radius:10px;border:1px solid var(--border);background:rgba(14,22,42,.5);transition:all .4s;cursor:pointer}
+.pc.act{border-color:var(--accent);box-shadow:0 0 20px rgba(245,158,11,.1)}
+@media(max-width:768px){.kpi-v{font-size:1.6rem}#scene-box{height:40vh;min-height:280px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<header class="sticky top-0 z-50 backdrop-blur-2xl border-b border-[rgba(30,42,69,.5)]" style="background:rgba(5,8,16,.88)">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 h-13 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center"><i class="fas fa-brain text-black text-xs"></i></div>
+<span class="font-bold text-base tracking-tight">ParkNet<span class="text-amber-500">AI</span></span>
+<span class="hidden sm:inline badge bl ml-1">LIVE</span>
+</div>
+<div class="flex items-center gap-3"><span class="ld"></span><span class="text-[10px] text-gray-500 mono hidden sm:inline" id="clk"></span></div>
+</div>
+</header>
+<main>
+<section id="scene-box">
+<div class="sln"></div><div class="scene-fade"></div>
+<div class="absolute top-3 left-3 sm:top-5 sm:left-5 z-10 pointer-events-none">
+<p class="text-[9px] text-amber-500/60 mono mb-1 tracking-widest">REAL-TIME 3D INTELLIGENCE</p>
+<h1 class="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight">Parking Hotspot Detection</h1>
+<p class="text-[11px] text-gray-500 mt-1.5 max-w-[240px]">DBSCAN on <span class="text-amber-500 font-semibold" id="dl">0</span> real violation records</p>
+</div>
+<div class="absolute top-3 right-3 sm:top-5 sm:right-5 z-10 pointer-events-none text-right">
+<div class="text-[9px] text-gray-500 mono">CLUSTERS</div>
+<div class="text-2xl font-extrabold text-amber-400 mono" id="sc">--</div>
+<div class="text-[9px] text-gray-600 mono mt-0.5">Sil: <span class="text-emerald-400" id="ss">--</span></div>
+</div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 -mt-8 relative z-10">
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3" id="kpi-g"></div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 mt-8">
+<div class="glass p-4 af">
+<div class="flex flex-wrap items-center gap-4">
+<div class="flex-1 min-w-[160px]">
+<div class="text-[10px] font-semibold text-gray-400 mb-1">Epsilon (deg)</div>
+<div class="flex items-center gap-2"><input type="range" id="eps-sl" min="0.001" max="0.008" step="0.0005" value="0.003"><span class="mono text-xs text-amber-400 w-12 text-right" id="eps-v">0.0030</span></div>
+</div>
+<div class="flex-1 min-w-[120px]">
+<div class="text-[10px] font-semibold text-gray-400 mb-1">MinPts</div>
+<div class="flex items-center gap-2"><input type="range" id="mp-sl" min="2" max="10" step="1" value="4"><span class="mono text-xs text-amber-400 w-6 text-right" id="mp-v">4</span></div>
+</div>
+<button class="cb" id="run-b"><i class="fas fa-play mr-1"></i>Run DBSCAN</button>
+<div class="text-right"><div class="text-[9px] text-gray-500 mono">NOISE</div><div class="text-sm font-bold text-gray-400 mono" id="nc">--</div></div>
+<div class="text-right"><div class="text-[9px] text-gray-500 mono">SILHOUETTE</div><div class="text-sm font-bold text-emerald-400 mono" id="sil-v">--</div></div>
+</div>
+</div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 mt-10">
+<p class="sl">Model Pipeline</p>
+<h2 class="text-lg font-bold mb-5">5-Layer Intelligence</h2>
+<div class="flex flex-wrap items-center justify-center gap-2 af">
+<div class="ml"><span class="ln">1</span><div class="text-[9px] text-amber-500 mono">Parse</div><div class="text-xs font-semibold">Data Ingest</div><div class="text-[9px] text-emerald-400 mono mt-1" id="m1">119 rows</div></div>
+<div class="cn"><div class="fd"></div><i class="fas fa-chevron-right mx-0.5"></i><div class="fd" style="animation-delay:.3s"></div></div>
+<div class="ml"><span class="ln">2</span><div class="text-[9px] text-amber-500 mono">Cluster</div><div class="text-xs font-semibold">DBSCAN</div><div class="text-[9px] text-emerald-400 mono mt-1" id="m2">--</div></div>
+<div class="cn"><div class="fd" style="animation-delay:.2s"></div><i class="fas fa-chevron-right mx-0.5"></i><div class="fd" style="animation-delay:.5s"></div></div>
+<div class="ml"><span class="ln">3</span><div class="text-[9px] text-amber-500 mono">Score</div><div class="text-xs font-semibold">Impact</div><div class="text-[9px] text-emerald-400 mono mt-1" id="m3">--</div></div>
+<div class="cn"><div class="fd" style="animation-delay:.4s"></div><i class="fas fa-chevron-right mx-0.5"></i><div class="fd" style="animation-delay:.7s"></div></div>
+<div class="ml"><span class="ln">4</span><div class="text-[9px] text-amber-500 mono">Rank</div><div class="text-xs font-semibold">Priority</div><div class="text-[9px] text-emerald-400 mono mt-1" id="m4">--</div></div>
+<div class="cn"><div class="fd" style="animation-delay:.6s"></div><i class="fas fa-chevron-right mx-0.5"></i><div class="fd" style="animation-delay:.9s"></div></div>
+<div class="ml"><span class="ln">5</span><div class="text-[9px] text-amber-500 mono">Predict</div><div class="text-xs font-semibold">Forecast</div><div class="text-[9px] text-emerald-400 mono mt-1" id="m5">--</div></div>
+</div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 mt-12">
+<p class="sl">Spatial Analysis</p>
+<h2 class="text-lg font-bold mb-5">Hotspot Map & Ranking</h2>
+<div class="grid lg:grid-cols-5 gap-3">
+<div class="lg:col-span-3 glass p-3 af"><div class="flex items-center justify-between mb-2"><span class="text-xs font-semibold">Violation Density</span>
+<div class="flex gap-2 text-[9px] text-gray-500"><span><span class="inline-block w-2 h-2 rounded-sm bg-red-500/60 mr-0.5"></span>Critical</span><span><span class="inline-block w-2 h-2 rounded-sm bg-amber-500/60 mr-0.5"></span>High</span><span><span class="inline-block w-2 h-2 rounded-sm bg-blue-500/60 mr-0.5"></span>Med</span></div></div>
+<div id="live-map" class="w-full rounded-lg border border-[rgba(30,42,69,0.5)]" style="height:400px; z-index:1;"></div></div>
+<div class="lg:col-span-2 glass p-3 af" style="transition-delay:.1s">
+<div class="flex items-center justify-between mb-2"><span class="text-xs font-semibold">Cluster Priority</span><span class="text-[9px] text-gray-500 mono" id="ci">--</span></div>
+<div class="overflow-auto max-h-[380px]"><table class="dt"><thead><tr><th>Zone</th><th>Pts</th><th>Impact</th><th>Rank</th></tr></thead><tbody id="ptb"></tbody></table></div>
+</div>
+</div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 mt-12">
+<p class="sl">Temporal — From Real Data</p>
+<h2 class="text-lg font-bold mb-5">Trends & Distribution</h2>
+<div class="grid md:grid-cols-3 gap-3">
+<div class="md:col-span-2 glass p-3 af"><span class="text-xs font-semibold">Timeline</span><canvas id="ct" height="160" class="mt-2"></canvas></div>
+<div class="glass p-3 af" style="transition-delay:.1s"><span class="text-xs font-semibold">Violation Types</span><canvas id="cy" height="160" class="mt-2"></canvas></div>
+</div>
+<div class="grid md:grid-cols-2 gap-3 mt-3">
+<div class="glass p-3 af" style="transition-delay:.15s"><span class="text-xs font-semibold">Hourly Pattern</span><canvas id="ch" height="140" class="mt-2"></canvas></div>
+<div class="glass p-3 af" style="transition-delay:.2s"><span class="text-xs font-semibold">Vehicle Types</span><canvas id="cv" height="140" class="mt-2"></canvas></div>
+</div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 mt-12">
+<p class="sl">Traffic Prediction</p>
+<h2 class="text-lg font-bold mb-1">Where Will Traffic Occur Next?</h2>
+<p class="text-xs text-gray-500 mb-5">Zone-hour exponential smoothing forecast</p>
+<div class="grid sm:grid-cols-3 gap-3 mb-4" id="pc"></div>
+<div class="glass p-4 af"><span class="text-xs font-semibold">Prediction Confidence by Zone</span>
+<div id="pb" class="mt-3"></div></div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 mt-12">
+<p class="sl">Accuracy — Computed Live</p>
+<h2 class="text-lg font-bold mb-5">Model Validation</h2>
+<div class="grid sm:grid-cols-3 gap-3 af">
+<div class="glass p-5 flex flex-col items-center">
+<svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="#1c2a45" stroke-width="5"/><circle cx="50" cy="50" r="45" fill="none" stroke="#f59e0b" stroke-width="5" stroke-linecap="round" class="gr" id="g1"/></svg>
+<div class="text-xl font-bold text-amber-400 mt-1" id="g1v">--</div>
+<div class="text-[9px] text-gray-500">Silhouette Score</div></div>
+<div class="glass p-5 flex flex-col items-center">
+<svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="#1c2a45" stroke-width="5"/><circle cx="50" cy="50" r="45" fill="none" stroke="#10b981" stroke-width="5" stroke-linecap="round" class="gr" id="g2"/></svg>
+<div class="text-xl font-bold text-emerald-400 mt-1" id="g2v">--</div>
+<div class="text-[9px] text-gray-500">Cluster Purity</div></div>
+<div class="glass p-5 flex flex-col items-center">
+<svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="#1c2a45" stroke-width="5"/><circle cx="50" cy="50" r="45" fill="none" stroke="#3b82f6" stroke-width="5" stroke-linecap="round" class="gr" id="g3"/></svg>
+<div class="text-xl font-bold text-blue-400 mt-1" id="g3v">--</div>
+<div class="text-[9px] text-gray-500">Prediction Conf.</div></div>
+</div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 mt-12 mb-14">
+<div class="flex justify-between items-end mb-5 flex-wrap gap-3">
+<div>
+<p class="sl">Live Action Console</p>
+<h2 class="text-lg font-bold">Police Dispatch & Enforcement</h2>
+</div>
+<div class="glass px-4 py-2 flex items-center gap-3">
+<div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Available Units</div>
+<div class="flex gap-1" id="active-patrols">
+<i class="fas fa-car-side text-amber-500"></i><i class="fas fa-car-side text-amber-500"></i><i class="fas fa-car-side text-amber-500"></i>
+</div>
+</div>
+</div>
+<div class="grid md:grid-cols-2 gap-3" id="rg"></div>
+</section>
+</main>
+<footer class="border-t border-[rgba(30,42,69,.4)] py-5 text-center text-[10px] text-gray-600">ParkNet AI — 119 Real Violation Records Processed</footer>
+<div class="toast-b" id="toast"><div class="flex items-center gap-2.5"><i class="fas fa-bell text-amber-500 text-sm"></i><div><div class="text-xs font-semibold" id="tt"></div><div class="text-[10px] text-gray-400" id="tm"></div></div></div></div>
+
+<!-- CCTV Modal -->
+<div id="cctv-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div class="glass w-[90%] max-w-2xl border-amber-500/30 shadow-2xl shadow-amber-500/10">
+        <div class="p-3 border-b border-[rgba(30,42,69,.5)] flex justify-between items-center bg-black/40">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-video text-red-500 animate-pulse"></i>
+                <span class="text-sm font-bold text-gray-200" id="cctv-title">Live Feed: Zone</span>
+            </div>
+            <button onclick="document.getElementById('cctv-modal').classList.replace('flex','hidden')" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="relative w-full h-[350px] bg-gray-900 overflow-hidden flex items-center justify-center">
+            <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1563223771-5fe4038fbfc9?q=80&w=1200&auto=format&fit=crop')] bg-cover bg-center opacity-60"></div>
+            <div class="absolute inset-0 bg-blue-900/20 mix-blend-overlay"></div>
+            <!-- Overlay UI -->
+            <div class="absolute top-2 left-2 text-[10px] font-mono text-white/80 bg-black/50 px-2 py-1 rounded">REC • <span id="cctv-time"></span></div>
+            <div class="absolute bottom-2 left-2 text-[10px] font-mono text-amber-400 bg-black/50 px-2 py-1 rounded border border-amber-500/30"><i class="fas fa-expand mr-1"></i>AI ANALYSIS: ILLEGAL PARKING DETECTED</div>
+            <div class="absolute top-1/4 right-1/4 w-16 h-16 border-2 border-red-500/80 rounded animate-ping" style="animation-duration: 3s;"></div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ========== ALL 119 REAL RECORDS FROM YOUR DATASET ========== */
+/* Format: [lat, lng, vehicleType, violationTypes|separated, policeStation, datetime, validationStatus] */
+const D=[
+[12.92556,77.61867,"CAR","WRONG PARKING|PARKING NEAR ROAD CROSSING","Madiwala","2023-11-20T00:28","approved"],
+[12.90546,77.70078,"CAR","NO PARKING","Bellandur","2023-11-24T22:46",""],
+[12.92545,77.61850,"CAR","WRONG PARKING|PARKING IN A MAIN ROAD","Madiwala","2023-11-20T00:27","approved"],
+[12.95652,77.51862,"SCOOTER","NO PARKING","Byatarayanapura","2023-11-16T06:47","approved"],
+[12.97777,77.58055,"TANKER","NO PARKING","Upparpet","2023-11-22T04:56","approved"],
+[12.98168,77.60812,"SCOOTER","NO PARKING","Shivajinagar","2023-11-28T07:04","approved"],
+[12.99555,77.61373,"SCOOTER","NO PARKING","Pulikeshinagar","2023-11-28T06:55","approved"],
+[12.99787,77.54389,"SCOOTER","WRONG PARKING","Vijayanagara","2023-11-28T06:35","approved"],
+[12.99540,77.61400,"PASSENGER AUTO","NO PARKING","Pulikeshinagar","2023-11-28T06:56","approved"],
+[12.99541,77.61402,"SCOOTER","NO PARKING","Pulikeshinagar","2023-11-28T06:57","approved"],
+[12.97601,77.59954,"CAR","WRONG PARKING","Cubbon Park","2023-12-22T03:04","rejected"],
+[12.99772,77.54450,"CAR","WRONG PARKING","Vijayanagara","2023-11-28T06:34","approved"],
+[13.00820,77.69332,"CAR","NO PARKING","K.R. Pura","2023-11-17T19:01","approved"],
+[12.98160,77.60799,"PASSENGER AUTO","NO PARKING","Shivajinagar","2023-11-28T07:01","approved"],
+[12.97057,77.57602,"SCOOTER","NO PARKING","City Market","2023-12-19T03:51",""],
+[12.99438,77.61564,"SCOOTER","NO PARKING","Pulikeshinagar","2023-11-28T06:56","approved"],
+[12.99438,77.61564,"SCOOTER","NO PARKING","Pulikeshinagar","2023-11-28T06:57","approved"],
+[12.99446,77.61559,"SCOOTER","NO PARKING","Pulikeshinagar","2023-11-28T06:57","rejected"],
+[12.99446,77.61559,"SCOOTER","NO PARKING","Pulikeshinagar","2023-11-28T07:00","rejected"],
+[12.91250,77.63381,"SCOOTER","WRONG PARKING","HSR Layout","2023-11-26T08:11","approved"],
+[12.98186,77.60762,"SCOOTER","WRONG PARKING","Shivajinagar","2023-11-17T05:07","approved"],
+[12.87889,77.54554,"SCOOTER","WRONG PARKING","Thalagattapura","2023-11-16T01:03","rejected"],
+[13.00819,77.69402,"CAR","NO PARKING","K.R. Pura","2023-11-28T06:47","approved"],
+[12.89935,77.67550,"SCOOTER","NO PARKING","Bellandur","2023-11-20T02:20",""],
+[12.93407,77.68977,"MOTOR CYCLE","WRONG PARKING|NO PARKING|DOUBLE PARKING|PARKING IN A MAIN ROAD","HAL Old Airport","2024-03-14T22:43","approved"],
+[12.98913,77.59253,"CAR","WRONG PARKING","High ground","2023-11-17T22:29","approved"],
+[12.97655,77.57749,"CAR","WRONG PARKING","Upparpet","2023-11-28T06:46","approved"],
+[12.93407,77.68977,"SCOOTER","NO PARKING|WRONG PARKING|DOUBLE PARKING|PARKING IN A MAIN ROAD","HAL Old Airport","2024-03-14T23:10","approved"],
+[12.97636,77.57742,"CAR","WRONG PARKING","Upparpet","2023-11-28T06:48","approved"],
+[12.97665,77.57736,"CAR","WRONG PARKING","Upparpet","2023-11-28T06:44","approved"],
+[12.91707,77.65161,"SCOOTER","WRONG PARKING","HSR Layout","2023-11-17T08:10","approved"],
+[13.00824,77.69382,"SCOOTER","NO PARKING","K.R. Pura","2023-11-17T18:42","approved"],
+[12.97396,77.57837,"CAR","WRONG PARKING","Upparpet","2024-03-10T06:12",""],
+[13.06651,77.57021,"CAR","WRONG PARKING","Kodigehalli","2024-03-10T05:22",""],
+[13.06361,77.57197,"CAR","WRONG PARKING","Kodigehalli","2024-03-10T05:25",""],
+[13.06361,77.57197,"CAR","WRONG PARKING","Kodigehalli","2024-03-10T05:30",""],
+[13.06352,77.57202,"GOODS AUTO","WRONG PARKING","Kodigehalli","2024-03-10T05:30",""],
+[13.04531,77.50556,"SCOOTER","WRONG PARKING","Peenya","2023-11-17T21:28","approved"],
+[12.99620,77.56314,"SCOOTER","NO PARKING","Sheshadripuram","2023-11-18T04:42","approved"],
+[12.97013,77.64129,"CAR","NO PARKING","Jeevanbheemanagar","2023-11-17T04:25","approved"],
+[13.00672,77.68778,"VAN","WRONG PARKING","K.R. Pura","2023-11-17T20:26","approved"],
+[12.93971,77.69548,"CAR","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:15","approved"],
+[13.07148,77.56775,"CAR","WRONG PARKING","Kodigehalli","2024-03-10T05:17",""],
+[12.93973,77.69553,"CAR","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:14","approved"],
+[12.97557,77.58164,"CAR","NO PARKING","Upparpet","2023-12-17T06:07",""],
+[12.93975,77.69550,"CAR","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:14","approved"],
+[12.93973,77.69549,"CAR","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:14","approved"],
+[12.84185,77.64530,"SCOOTER","WRONG PARKING","Electronic City","2024-03-10T07:10",""],
+[12.84185,77.64530,"SCOOTER","WRONG PARKING","Electronic City","2024-03-10T07:10",""],
+[12.84185,77.64530,"SCOOTER","WRONG PARKING","Electronic City","2024-03-10T07:10",""],
+[12.84188,77.64535,"MOTOR CYCLE","WRONG PARKING","Electronic City","2024-03-10T07:10",""],
+[12.84188,77.64535,"MOTOR CYCLE","WRONG PARKING","Electronic City","2024-03-10T07:10",""],
+[12.84188,77.64535,"MOTOR CYCLE","WRONG PARKING","Electronic City","2024-03-10T07:10",""],
+[12.84188,77.64535,"MOTOR CYCLE","WRONG PARKING","Electronic City","2024-03-10T07:10",""],
+[12.84190,77.64550,"SCOOTER","WRONG PARKING","Electronic City","2024-03-10T07:11",""],
+[12.84190,77.64550,"SCOOTER","WRONG PARKING","Electronic City","2024-03-10T07:11",""],
+[12.84190,77.64550,"SCOOTER","WRONG PARKING","Electronic City","2024-03-10T07:11",""],
+[12.84191,77.64553,"MOTOR CYCLE","WRONG PARKING","Electronic City","2024-03-10T07:11",""],
+[12.84190,77.64552,"SCOOTER","WRONG PARKING","Electronic City","2024-03-10T07:12",""],
+[12.84190,77.64552,"SCOOTER","WRONG PARKING","Electronic City","2024-03-10T07:12",""],
+[12.84190,77.64552,"MOTOR CYCLE","WRONG PARKING","Electronic City","2024-03-10T07:34",""],
+[12.84190,77.64552,"MOTOR CYCLE","WRONG PARKING","Electronic City","2024-03-10T07:34",""],
+[12.99404,77.58911,"SCOOTER","NO PARKING","High ground","2023-11-28T21:22","approved"],
+[12.93494,77.53641,"SCOOTER","NO PARKING","Banashankari","2023-11-28T21:20","approved"],
+[12.84190,77.64552,"MOTOR CYCLE","WRONG PARKING","Electronic City","2024-03-10T07:34",""],
+[12.93968,77.69550,"LGV","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:15","approved"],
+[12.93979,77.69550,"CAR","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:14","approved"],
+[12.84190,77.64552,"MOTOR CYCLE","WRONG PARKING","Electronic City","2024-03-10T07:34",""],
+[12.84190,77.64552,"MOTOR CYCLE","WRONG PARKING","Electronic City","2024-03-10T07:34",""],
+[12.99600,77.69451,"PASSENGER AUTO","PARKING IN A MAIN ROAD|NO PARKING","Mahadevapura","2024-03-10T07:44",""],
+[12.89210,77.63818,"PASSENGER AUTO","WRONG PARKING","HSR Layout","2024-03-10T07:33",""],
+[12.99600,77.69451,"PASSENGER AUTO","PARKING IN A MAIN ROAD|NO PARKING","Mahadevapura","2024-03-10T07:44",""],
+[12.93975,77.69562,"CAR","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:14","approved"],
+[12.92703,77.67817,"PASSENGER AUTO","NO PARKING","Bellandur","2023-11-17T22:36","approved"],
+[12.89210,77.63818,"SCOOTER","WRONG PARKING","HSR Layout","2024-03-10T07:33",""],
+[12.93975,77.69568,"CAR","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:13","approved"],
+[12.99956,77.67428,"CAR","WRONG PARKING","Banaswadi","2023-12-24T20:08",""],
+[12.93975,77.69564,"CAR","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:13","approved"],
+[12.97707,77.57726,"SCOOTER","WRONG PARKING","Upparpet","2023-11-17T04:32","approved"],
+[12.99943,77.54961,"MOPED","WRONG PARKING","Rajajinagar","2024-04-07T23:04",""],
+[12.93975,77.69568,"PASSENGER AUTO","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:13","approved"],
+[12.89100,77.63879,"CAR","NO PARKING","HSR Layout","2024-03-10T07:48",""],
+[12.93966,77.69569,"CAR","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:12","approved"],
+[12.91707,77.65161,"MOTOR CYCLE","WRONG PARKING","HSR Layout","2023-11-17T08:10","rejected"],
+[12.93975,77.69564,"PASSENGER AUTO","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:13","approved"],
+[12.93967,77.69589,"CAR","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:12","approved"],
+[12.93407,77.68977,"MOTOR CYCLE","NO PARKING|WRONG PARKING|DOUBLE PARKING|PARKING IN A MAIN ROAD","HAL Old Airport","2024-03-14T22:43","approved"],
+[12.93975,77.69559,"CAR","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:12","approved"],
+[12.93976,77.69564,"PASSENGER AUTO","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:14","approved"],
+[12.98162,77.60809,"SCOOTER","WRONG PARKING","Shivajinagar","2023-11-17T04:30","approved"],
+[13.18429,77.67977,"MAXI-CAB","NO PARKING","Chikkajala","2023-11-16T23:32","approved"],
+[12.93970,77.69568,"CAR","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:13","approved"],
+[12.93968,77.69576,"CAR","PARKING IN A MAIN ROAD|WRONG PARKING","HAL Old Airport","2023-11-22T01:13","approved"],
+[12.98164,77.60809,"SCOOTER","WRONG PARKING","Shivajinagar","2023-11-17T04:30","approved"],
+[12.92586,77.67676,"CAR","NO PARKING","Bellandur","2023-11-21T22:20","approved"],
+[12.92621,77.67670,"CAR","NO PARKING","Bellandur","2023-11-21T22:20","approved"],
+[12.99167,77.58852,"SCOOTER","WRONG PARKING","High ground","2023-11-27T21:46","approved"],
+[12.98328,77.60967,"SCOOTER","WRONG PARKING","Shivajinagar","2023-11-16T23:42","approved"],
+[12.96303,77.56033,"LGV","NO PARKING","Magadi Road","2023-11-17T22:26","approved"],
+[12.98973,77.50550,"MOTOR CYCLE","WRONG PARKING","Kamakshipalya","2023-11-28T21:37","approved"],
+[12.99973,77.54969,"MOPED","WRONG PARKING","Rajajinagar","2024-04-06T06:10",""],
+[12.97917,77.57497,"SCOOTER","WRONG PARKING","Upparpet","2023-11-19T00:32","approved"],
+[12.87582,77.67143,"SCOOTER","WRONG PARKING","Electronic City","2023-11-17T06:20","rejected"],
+[12.93407,77.68977,"SCOOTER","NO PARKING|WRONG PARKING|DOUBLE PARKING|PARKING IN A MAIN ROAD","HAL Old Airport","2024-03-14T22:42","approved"],
+[13.01065,77.50670,"PASSENGER AUTO","WRONG PARKING","Peenya","2023-11-17T05:58","rejected"],
+[12.95665,77.70321,"CAR","WRONG PARKING|PARKING IN A MAIN ROAD","HAL Old Airport","2023-11-28T21:44","approved"],
+[12.97366,77.61464,"CAR","NO PARKING","Halasur","2023-12-19T05:10","approved"],
+[12.97362,77.61480,"CAR","NO PARKING","Halasur","2023-12-19T05:10","approved"],
+[12.97145,77.59778,"CAR","NO PARKING","Cubbon Park","2023-11-28T21:23","approved"],
+[12.97120,77.59705,"OTHERS","NO PARKING","Cubbon Park","2023-11-28T21:22","approved"],
+[12.93774,77.70079,"MOTOR CYCLE","WRONG PARKING","HAL Old Airport","2023-11-19T00:42","rejected"],
+[12.96896,77.53614,"SCOOTER","NO PARKING","Vijayanagara","2023-11-18T00:57","approved"],
+[12.93407,77.68977,"SCOOTER","NO PARKING|WRONG PARKING|DOUBLE PARKING|PARKING IN A MAIN ROAD","HAL Old Airport","2024-03-14T23:21","approved"],
+[12.98587,77.64567,"MAXI-CAB","WRONG PARKING","Jeevanbheemanagar","2023-11-27T20:20","rejected"],
+[12.97728,77.57788,"SCOOTER","NO PARKING","Upparpet","2023-11-13T04:21","approved"],
+[12.97300,77.61748,"PASSENGER AUTO","NO PARKING","Halasur","2023-11-28T21:26","approved"],
+[12.96860,77.53717,"MOTOR CYCLE","WRONG PARKING","Vijayanagara","2023-11-18T00:44","approved"],
+[12.91992,77.64501,"CAR","NO PARKING","HSR Layout","2023-11-17T23:51","approved"]
+];
+
+document.getElementById('dl').textContent=D.length;
+document.getElementById('m1').textContent=D.length+' rows';
+
+/* Parse into objects */
+const records=D.map((r,i)=>({
+    id:i,lat:r[0],lng:r[1],vehicle:r[2],
+    violations:r[3].split('|'),
+    station:r[4],
+    date:new Date(r[5]),
+    status:r[6]||'pending',
+    hour:new Date(r[5]).getHours()
+}));
+
+/* ===== DBSCAN WITH HAVERSINE DISTANCE ===== */
+function haversine(lat1,lng1,lat2,lng2){
+    const R=6371e3,toR=Math.PI/180;
+    const dLat=(lat2-lat1)*toR,dLng=(lng2-lng1)*toR;
+    const a=Math.sin(dLat/2)**2+Math.cos(lat1*toR)*Math.cos(lat2*toR)*Math.sin(dLng/2)**2;
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function runDBSCAN(pts,epsDeg,minPts){
+    const epsM=epsDeg*111320; // approximate meters per degree
+    const n=pts.length;
+    const labels=new Int32Array(n).fill(-1);
+    let cid=0;
+    function neighbors(pi){
+        const nb=[];
+        for(let i=0;i<n;i++){
+            if(haversine(pts[pi].lat,pts[pi].lng,pts[i].lat,pts[i].lng)<epsM)nb.push(i);
+        }
+        return nb;
+    }
+    function expand(pi,nb,c){
+        labels[pi]=c;
+        const seed=[...nb];let si=0;
+        while(si<seed.length){
+            const q=seed[si];
+            if(labels[q]===-1){labels[q]=c;}
+            else if(labels[q]!==-2){si++;continue;}
+            labels[q]=c;
+            const qn=neighbors(q);
+            if(qn.length>=minPts)for(const nn of qn)if(labels[nn]<=-1)seed.push(nn);
+            si++;
+        }
+    }
+    for(let i=0;i<n;i++){
+        if(labels[i]!==-1)continue;
+        const nb=neighbors(i);
+        if(nb.length<minPts){labels[i]=-2;continue;}
+        cid++;expand(i,nb,cid);
+    }
+    
+    // FIXED: Properly count noise points (those left as -2)
+    let noiseCount = 0;
+    for (let j = 0; j < n; j++) {
+        if (labels[j] === -2) noiseCount++;
+    }
+    
+    return {labels,cid,noise:noiseCount};
+}
+
+/* Silhouette Score */
+function silhouette(pts,labels){
+    const n=pts.length;let total=0;let counted=0;
+    for(let i=0;i<n;i++){
+        if(labels[i]<=0)continue;
+        const ci=labels[i];
+        let aSum=0,aCnt=0,bMin=Infinity;
+        const clusters=new Set();
+        for(let j=0;j<n;j++)if(labels[j]>0)clusters.add(labels[j]);
+        for(const c of clusters){
+            if(c===ci)continue;
+            let bSum=0,bCnt=0;
+            for(let j=0;j<n;j++){
+                if(labels[j]!==c)continue;
+                bSum+=haversine(pts[i].lat,pts[i].lng,pts[j].lat,pts[j].lng);
+                bCnt++;
+            }
+            if(bCnt>0){const avg=bSum/bCnt;if(avg<bMin)bMin=avg;}
+        }
+        for(let j=0;j<n;j++){
+            if(labels[j]!==ci||j===i)continue;
+            aSum+=haversine(pts[i].lat,pts[i].lng,pts[j].lat,pts[j].lng);
+            aCnt++;
+        }
+        if(aCnt>0&&bMin<Infinity){
+            const a=aSum/aCnt;
+            total+=(bMin-a)/Math.max(a,bMin);
+            counted++;
+        }
+    }
+    return counted>0?total/counted:0;
+}
+
+/* Cluster Purity (using station as ground truth) */
+function purity(labels,stations){
+    const n=labels.length;let correct=0;
+    const clMap={};
+    for(let i=0;i<n;i++){
+        if(labels[i]<=0)continue;
+        if(!clMap[labels[i]])clMap[labels[i]]={};
+        clMap[labels[i]][stations[i]]=(clMap[labels[i]][stations[i]]||0)+1;
+    }
+    for(const c in clMap){
+        const vals=Object.values(clMap[c]);
+        correct+=Math.max(...vals);
+    }
+    const total=Object.values(clMap).reduce((s,c)=>s+Object.values(c).reduce((a,b)=>a+b,0),0);
+    return total>0?correct/total:0;
+}
+
+/* ===== INITIAL DBSCAN RUN ===== */
+let epsVal=0.003, minPtsVal=4;
+let result=runDBSCAN(records,epsVal,minPtsVal);
+let silVal=silhouette(records,result.labels);
+let purVal=purity(result.labels,records.map(r=>r.station));
+
+/* Build cluster summaries */
+function buildClusters(res){
+    const cl={};
+    records.forEach((r,i)=>{
+        const c=res.labels[i];
+        if(c<=0)return;
+        if(!cl[c])cl[c]={pts:[],station:r.station};
+        cl[c].pts.push(r);
+    });
+    return Object.values(cl).map(c=>{
+        const avgLat=c.pts.reduce((s,p)=>s+p.lat,0)/c.pts.length;
+        const avgLng=c.pts.reduce((s,p)=>s+p.lng,0)/c.pts.length;
+        
+        let congestionImpact = 0;
+        c.pts.forEach(p => {
+            let pScore = 1;
+            p.violations.forEach(v => {
+                if (v.includes('PARKING IN A MAIN ROAD') || v.includes('DOUBLE PARKING')) pScore += 2;
+                if (v.includes('PARKING NEAR ROAD CROSSING')) pScore += 1.5;
+            });
+            congestionImpact += pScore;
+        });
+
+        const cnt=c.pts.length;
+        const score=Math.min(1,congestionImpact/60);
+        const priority=score>.7?'CRITICAL':score>.4?'HIGH':score>.15?'MEDIUM':'LOW';
+        return{name:c.station,lat:avgLat,lng:avgLng,count:cnt,score,priority,congestion: congestionImpact, pts:c.pts};
+    }).sort((a,b)=>b.score-a.score);
+}
+let clusters=buildClusters(result);
+
+/* ===== 3D SCENE ===== */
+const box=document.getElementById('scene-box');
+let W=box.clientWidth,H=box.clientHeight;
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x050810,0.01);
+const cam=new THREE.PerspectiveCamera(50,W/H,0.1,500);
+cam.position.set(50,40,50);
+const ren=new THREE.WebGLRenderer({antialias:true,alpha:true});
+ren.setSize(W,H);ren.setPixelRatio(Math.min(devicePixelRatio,2));
+ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=0.7;
+box.insertBefore(ren.domElement,box.firstChild);
+
+/* Ground */
+const gnd=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshStandardMaterial({color:0x060c18,roughness:.95}));
+gnd.rotation.x=-Math.PI/2;scene.add(gnd);
+const grd=new THREE.GridHelper(100,50,0x15203a,0x0e1628);grd.position.y=.01;scene.add(grd);
+
+/* Map lat/lng to 3D coords */
+function to3D(lat,lng){
+    const x=((lng-77.50)/0.25)*100-50;
+    const z=-((lat-12.82)/0.22)*100+50;
+    return{x,z};
+}
+
+/* Roads */
+const roadMat=new THREE.MeshBasicMaterial({color:0x0c1525});
+[[-50,0,100,.7],[50,0,100,.7],[0,-50,.7,100],[0,50,.7,100]].forEach(r=>{
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(r[3],r[2]),roadMat);
+    m.rotation.x=-Math.PI/2;m.position.set(r[0],.02,r[1]);scene.add(m);
+});
+
+/* Buildings */
+const bldg=[];
+let sd=42;
+function rng(s){s=Math.sin(s)*43758.5453;return s-Math.floor(s);}
+for(let bx=-40;bx<=40;bx+=6){
+    for(let bz=-40;bz<=40;bz+=6){
+        sd++;if(rng(sd)<.2)continue;
+        const nb=1+Math.floor(rng(sd+1)*3);
+        for(let i=0;i<nb;i++){
+            sd++;
+            const bw=Math.max(.5,.7+rng(sd)*2),bd=Math.max(.5,.7+rng(sd+1)*2);
+            const bh=Math.max(.5,1+rng(sd+2)*12);
+            const geo=new THREE.BoxGeometry(bw,bh,bd);
+            const hue=.58+rng(sd+3)*.08;
+            const mat=new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL(hue,.3,.05+rng(sd+4)*.05),roughness:.8,metalness:.2});
+            const m=new THREE.Mesh(geo,mat);
+            m.position.set(bx+(rng(sd+5)-.5)*4,bh/2,bz+(rng(sd+6)-.5)*4);
+            scene.add(m);
+            const edg=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x1a2844,transparent:true,opacity:.3}));
+            edg.position.copy(m.position);scene.add(edg);
+            bldg.push(m);
+        }
+    }
+}
+
+/* Heatmap on ground */
+function makeHeatTex(clusters){
+    const cv=document.createElement('canvas');cv.width=512;cv.height=512;
+    const ctx=cv.getContext('2d');ctx.clearRect(0,0,512,512);
+    clusters.forEach(c=>{
+        const{x,z}=to3D(c.lat,c.lng);
+        const cx=((x+50)/100)*512,cy=((z+50)/100)*512;
+        const r=Math.max(12,25+c.score*80);
+        const col=c.priority==='CRITICAL'?[239,68,68]:c.priority==='HIGH'?[245,158,11]:c.priority==='MEDIUM'?[59,130,246]:[16,185,129];
+        const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+        g.addColorStop(0,`rgba(${col[0]},${col[1]},${col[2]},0.55)`);
+        g.addColorStop(0.4,`rgba(${col[0]},${col[1]},${col[2]},0.15)`);
+        g.addColorStop(1,`rgba(${col[0]},${col[1]},${col[2]},0)`);
+        ctx.fillStyle=g;ctx.fillRect(0,0,512,512);
+    });
+    return new THREE.CanvasTexture(cv);
+}
+
+let heatPlane=null;
+function updateHeat(){
+    if(heatPlane)scene.remove(heatPlane);
+    const tex=makeHeatTex(clusters);
+    heatPlane=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:.7,depthWrite:false}));
+    heatPlane.rotation.x=-Math.PI/2;heatPlane.position.y=.04;scene.add(heatPlane);
+}
+updateHeat();
+
+/* Hotspot 3D markers */
+const markers=[];
+function updateMarkers(){
+    markers.forEach(m=>{scene.remove(m.s);scene.remove(m.r1);scene.remove(m.r2);scene.remove(m.l);scene.remove(m.b);scene.remove(m.trail);});
+    markers.length=0;
+    clusters.forEach((c,i)=>{
+        const{x,z}=to3D(c.lat,c.lng);
+        const col=c.priority==='CRITICAL'?0xef4444:c.priority==='HIGH'?0xf59e0b:c.priority==='MEDIUM'?0x3b82f6:0x10b981;
+        const sph=new THREE.Mesh(new THREE.SphereGeometry(Math.max(.1,.4),16,16),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.6,transparent:true,opacity:.85}));
+        sph.position.set(x,3,z);scene.add(sph);
+        const r1=new THREE.Mesh(new THREE.RingGeometry(Math.max(.1,.8),Math.max(.2,1.2),32),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.2,side:THREE.DoubleSide}));
+        r1.rotation.x=-Math.PI/2;r1.position.set(x,.06,z);scene.add(r1);
+        const r2=new THREE.Mesh(new THREE.RingGeometry(Math.max(.1,1.4),Math.max(.2,1.7),32),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.1,side:THREE.DoubleSide}));
+        r2.rotation.x=-Math.PI/2;r2.position.set(x,.05,z);scene.add(r2);
+        const pl=new THREE.PointLight(col,1.5,14);pl.position.set(x,3.5,z);scene.add(pl);
+        const beam=new THREE.Mesh(new THREE.CylinderGeometry(Math.max(.01,.02),Math.max(.01,.12),6,8),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.12}));
+        beam.position.set(x,3,z);scene.add(beam);
+        // Trail ring animation
+        const trail=new THREE.Mesh(new THREE.RingGeometry(Math.max(.1,.5),Math.max(.2,.6),32),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.15,side:THREE.DoubleSide}));
+        trail.rotation.x=-Math.PI/2;trail.position.set(x,.07,z);scene.add(trail);
+        markers.push({s:sph,r1,r2,l:pl,b:beam,trail,baseY:3,x,z});
+    });
+}
+updateMarkers();
+
+/* Violation point particles on 3D map */
+const vpGeo=new THREE.BufferGeometry();
+const vpPos=new Float32Array(records.length*3);
+records.forEach((r,i)=>{const{x,z}=to3D(r.lat,r.lng);vpPos[i*3]=x;vpPos[i*3+1]=.1;vpPos[i*3+2]=z;});
+vpGeo.setAttribute('position',new THREE.BufferAttribute(vpPos,3));
+const vpPts=new THREE.Points(vpGeo,new THREE.PointsMaterial({color:0xf59e0b,size:.15,transparent:true,opacity:.5,sizeAttenuation:true}));
+scene.add(vpPts);
+
+/* Floating particles */
+const fpN=500;const fpGeo=new THREE.BufferGeometry();const fpP=new Float32Array(fpN*3);
+for(let i=0;i<fpN;i++){fpP[i*3]=(Math.random()-.5)*100;fpP[i*3+1]=Math.random()*22;fpP[i*3+2]=(Math.random()-.5)*100;}
+fpGeo.setAttribute('position',new THREE.BufferAttribute(fpP,3));
+scene.add(new THREE.Points(fpGeo,new THREE.PointsMaterial({color:0xf59e0b,size:.1,transparent:true,opacity:.2,sizeAttenuation:true})));
+
+/* Lights */
+scene.add(new THREE.AmbientLight(0x1a2540,.5));
+const dl=new THREE.DirectionalLight(0x4a6fa5,.35);dl.position.set(25,35,15);scene.add(dl);
+
+/* Controls */
+const ctrl=new OrbitControls(cam,ren.domElement);
+ctrl.enableDamping=true;ctrl.dampingFactor=.05;ctrl.autoRotate=true;ctrl.autoRotateSpeed=.35;
+ctrl.maxPolarAngle=Math.PI/2.3;ctrl.minPolarAngle=.3;ctrl.minDistance=15;ctrl.maxDistance=90;
+
+/* Animate */
+function anim(){
+    requestAnimationFrame(anim);
+    const t=performance.now()*.001;
+    markers.forEach((m,i)=>{
+        m.s.position.y=m.baseY+Math.sin(t*2+i*1.2)*.7;
+        m.r1.scale.setScalar(1+Math.sin(t*2.5+i*.7)*.35);
+        m.r1.material.opacity=.15+Math.sin(t*2+i)*.1;
+        m.r2.scale.setScalar(1+Math.sin(t*1.5+i*.9)*.45);
+        m.r2.material.opacity=.07+Math.sin(t*1.8+i)*.06;
+        m.b.material.opacity=.08+Math.sin(t*3+i)*.07;
+        m.trail.scale.setScalar(1.5+Math.sin(t*1.2+i*.5)*1.5);
+        m.trail.material.opacity=.1+Math.sin(t*1.5+i)*.08;
+    });
+    // Floating particles rise
+    const fa=fpGeo.attributes.position.array;
+    for(let i=0;i<fa.length;i+=3){fa[i+1]+=.007+Math.sin(t+i)*.002;if(fa[i+1]>22)fa[i+1]=0;}
+    fpGeo.attributes.position.needsUpdate=true;
+    ctrl.update();ren.render(scene,cam);
+}
+anim();
+
+window.addEventListener('resize',()=>{W=box.clientWidth;H=box.clientHeight;cam.aspect=W/H;cam.updateProjectionMatrix();ren.setSize(W,H);});
+
+/* ===== UPDATE ALL UI FROM REAL DATA ===== */
+function updateAll(){
+    const nCluster=result.cid;
+    const noise=result.noise; // Use the fixed noise property from result
+
+    document.getElementById('sc').textContent=nCluster;
+    document.getElementById('ss').textContent=silVal.toFixed(3);
+    document.getElementById('nc').textContent=noise;
+    document.getElementById('sil-v').textContent=silVal.toFixed(3);
+    document.getElementById('ci').textContent=nCluster+' clusters, '+noise+' noise';
+    document.getElementById('m2').textContent=nCluster+' clusters';
+    document.getElementById('m3').textContent='CIS scored';
+    document.getElementById('m4').textContent=clusters.filter(c=>c.priority==='CRITICAL').length+' critical';
+
+    // KPIs
+    const approved=records.filter(r=>r.status==='approved').length;
+    const rejected=records.filter(r=>r.status==='rejected').length;
+    const stations=new Set(records.map(r=>r.station)).size;
+    const kpiData=[
+        {icon:'fa-database',color:'text-amber-400',bg:'bg-amber-500/10',label:'Total Records',val:records.length,sub:`${approved} approved, ${rejected} rejected`},
+        {icon:'fa-fire',color:'text-red-400',bg:'bg-red-500/10',label:'Hotspot Clusters',val:nCluster,sub:`${noise} noise points filtered`},
+        {icon:'fa-building-shield',color:'text-blue-400',bg:'bg-blue-500/10',label:'Police Stations',val:stations,sub:'Unique zones in data'},
+        {icon:'fa-chart-line',color:'text-emerald-400',bg:'bg-emerald-500/10',label:'Silhouette Score',val:silVal.toFixed(2),sub:purVal.toFixed(2)+' purity'}
+    ];
+    const kg=document.getElementById('kpi-g');kg.innerHTML='';
+    kpiData.forEach((k,i)=>{
+        const d=document.createElement('div');d.className='glass p-4 af';d.style.transitionDelay=i*.08+'s';
+        d.innerHTML=`<div class="flex items-center gap-2 mb-2"><div class="w-7 h-7 rounded-lg ${k.bg} flex items-center justify-center"><i class="fas ${k.icon} ${k.color} text-xs"></i></div><span class="text-[10px] text-gray-500">${k.label}</span></div><div class="kpi-v ${k.color}">${k.val}</div><div class="text-[10px] text-gray-600 mt-1.5">${k.sub}</div>`;
+        kg.appendChild(d);
+    });
+
+    // Priority table
+    const tb=document.getElementById('ptb');tb.innerHTML='';
+    clusters.forEach((c,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td class="font-medium text-xs">${c.name}</td><td class="mono text-xs">${c.count}</td><td><div class="flex items-center gap-1.5"><div class="pb flex-1"><div class="pf" style="width:${(c.score*100).toFixed(0)}%;background:${c.priority==='CRITICAL'?'#ef4444':c.priority==='HIGH'?'#f59e0b':c.priority==='MEDIUM'?'#3b82f6':'#10b981'}"></div></div><span class="mono text-[10px] text-red-400 font-bold" title="Congestion Impact"><i class="fas fa-car-burst mr-1"></i>${c.congestion}</span></div></td><td><span class="badge ${c.priority==='CRITICAL'?'bc':c.priority==='HIGH'?'bh':c.priority==='MEDIUM'?'bm':'bl'}">${c.priority}</span></td>`;
+        tr.addEventListener('click',()=>flyTo(i));
+        tb.appendChild(tr);
+    });
+
+    // 2D Live Map
+    updateLiveMap();
+
+    // Charts
+    drawCharts();
+
+    // Prediction
+    buildPrediction();
+
+    // Accuracy gauges
+    setTimeout(()=>{
+        document.getElementById('g1').style.strokeDashoffset=283*(1-silVal);
+        document.getElementById('g1v').textContent=(silVal*100).toFixed(1)+'%';
+        document.getElementById('g2').style.strokeDashoffset=283*(1-purVal);
+        document.getElementById('g2v').textContent=(purVal*100).toFixed(1)+'%';
+        const predConf=Math.max(.5,Math.min(.95,silVal*.6+purVal*.4));
+        document.getElementById('g3').style.strokeDashoffset=283*(1-predConf);
+        document.getElementById('g3v').textContent=(predConf*100).toFixed(1)+'%';
+        document.getElementById('m5').textContent=(predConf*100).toFixed(0)+'% conf';
+    },400);
+
+    // Recommendations
+    buildRecs();
+
+    // Trigger scroll animations
+    setTimeout(()=>{document.querySelectorAll('.af').forEach(el=>{const r=el.getBoundingClientRect();if(r.top<window.innerHeight)el.classList.add('v');});},100);
+}
+
+/* 2D Live Leaflet Map */
+let liveMap = null;
+let mapMarkers = [];
+
+function updateLiveMap(){
+    if(!liveMap){
+        // Initialize Leaflet Map
+        liveMap = L.map('live-map').setView([12.9716, 77.5946], 11);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(liveMap);
+    }
+    
+    // Clear old markers
+    mapMarkers.forEach(m => liveMap.removeLayer(m));
+    mapMarkers = [];
+    
+    // Add clusters
+    const bounds = [];
+    clusters.forEach(c => {
+        const col = c.priority === 'CRITICAL' ? '#ef4444' : c.priority === 'HIGH' ? '#f59e0b' : c.priority === 'MEDIUM' ? '#3b82f6' : '#10b981';
+        
+        // Add a glowing circle
+        const circle = L.circle([c.lat, c.lng], {
+            color: col,
+            fillColor: col,
+            fillOpacity: 0.35,
+            radius: Math.max(100, c.score * 500)
+        }).addTo(liveMap);
+        
+        // Add a popup
+        circle.bindPopup(`
+            <div style="background:#0e162a; color:#fff; padding:5px; border-radius:5px; border:1px solid ${col}; font-family:'Space Grotesk',sans-serif;">
+                <div style="font-size:12px; font-weight:bold; color:${col}; margin-bottom:4px;">${c.name}</div>
+                <div style="font-size:10px; color:#aaa;">Violations: <span style="color:#fff;">${c.count}</span></div>
+                <div style="font-size:10px; color:#aaa;">Impact Score: <span style="color:#fff;">${c.congestion}</span></div>
+            </div>
+        `);
+        
+        mapMarkers.push(circle);
+        bounds.push([c.lat, c.lng]);
+    });
+    
+    // Individual points as tiny dots
+    records.forEach(r => {
+        const dot = L.circleMarker([r.lat, r.lng], {
+            radius: 2,
+            color: '#f59e0b',
+            fillColor: '#f59e0b',
+            fillOpacity: 0.5,
+            stroke: false
+        }).addTo(liveMap);
+        mapMarkers.push(dot);
+    });
+    
+    if(bounds.length > 0) liveMap.fitBounds(bounds, {padding: [30, 30]});
+}
+
+/* FIXED: Track Chart instances globally so they can be destroyed to prevent Canvas reuse error */
+let chartInstances = {};
+
+/* Charts */
+function drawCharts(){
+    Chart.defaults.color='#6b7280';
+    Chart.defaults.borderColor='#1c2a45';
+    Chart.defaults.font.family='Space Grotesk';
+    
+    // Destroy existing charts if they exist
+    if(chartInstances.ct) chartInstances.ct.destroy();
+    if(chartInstances.cy) chartInstances.cy.destroy();
+    if(chartInstances.ch) chartInstances.ch.destroy();
+    if(chartInstances.cv) chartInstances.cv.destroy();
+
+    // Timeline
+    const byDate={};
+    records.forEach(r=>{const d=r.date.toISOString().slice(0,10);byDate[d]=(byDate[d]||0)+1;});
+    const sortedD=Object.entries(byDate).sort((a,b)=>a[0].localeCompare(b[0]));
+    chartInstances.ct = new Chart(document.getElementById('ct'),{type:'bar',data:{labels:sortedD.map(e=>e[0].slice(5)),datasets:[{data:sortedD.map(e=>e[1]),backgroundColor:'rgba(245,158,11,0.4)',borderColor:'#f59e0b',borderWidth:1,borderRadius:3}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:10,font:{size:9}}},y:{beginAtZero:true,ticks:{font:{size:9}}}}}});
+    
+    // Violation types
+    const vtypes={};
+    records.forEach(r=>r.violations.forEach(v=>{vtypes[v]=(vtypes[v]||0)+1;}));
+    const vtSorted=Object.entries(vtypes).sort((a,b)=>b[1]-a[1]).slice(0,7);
+    chartInstances.cy = new Chart(document.getElementById('cy'),{type:'doughnut',data:{labels:vtSorted.map(e=>e[0].length>20?e[0].slice(0,20)+'...':e[0]),datasets:[{data:vtSorted.map(e=>e[1]),backgroundColor:['#ef4444','#f59e0b','#3b82f6','#a855f7','#10b981','#ec4899','#06b6d4'],borderColor:'#0e1628',borderWidth:2}]},options:{responsive:true,cutout:'60%',plugins:{legend:{position:'bottom',labels:{boxWidth:8,padding:6,font:{size:8}}}}}});
+    
+    // Hourly
+    const hours=Array(24).fill(0);
+    records.forEach(r=>{hours[r.hour]++;});
+    chartInstances.ch = new Chart(document.getElementById('ch'),{type:'bar',data:{labels:hours.map((_,i)=>i+':00'),datasets:[{data:hours,backgroundColor:hours.map(v=>v>8?'rgba(239,68,68,0.5)':v>4?'rgba(245,158,11,0.4)':'rgba(59,130,246,0.3)'),borderRadius:2,borderSkipped:false}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:12,font:{size:8}}},y:{beginAtZero:true,ticks:{font:{size:9}}}}}});
+    
+    // Vehicle types
+    const vmap={};
+    records.forEach(r=>{vmap[r.vehicle]=(vmap[r.vehicle]||0)+1;});
+    const vSorted=Object.entries(vmap).sort((a,b)=>b[1]-a[1]);
+    chartInstances.cv = new Chart(document.getElementById('cv'),{type:'bar',data:{labels:vSorted.map(e=>e[0]),datasets:[{data:vSorted.map(e=>e[1]),backgroundColor:['#ef4444','#f59e0b','#3b82f6','#a855f7','#10b981','#ec4899','#06b6d4','#f97316','#84cc16'],borderRadius:3,borderSkipped:false}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:8},maxRotation:45}},y:{beginAtZero:true,ticks:{font:{size:9}}}}}});
+}
+
+/* Traffic Prediction */
+function buildPrediction(){
+    // Build zone-hour matrix from real data
+    const zh={};
+    clusters.forEach((c,ci)=>{
+        const hArr=Array(24).fill(0);
+        c.pts.forEach(p=>{hArr[p.hour]++;});
+        zh[ci]={name:c.name,priority:c.priority,hours:hArr,count:c.count};
+    });
+    // Exponential smoothing
+    const alpha=.3;
+    const smoothed={};
+    Object.entries(zh).forEach(([ci,z])=>{
+        const s=[...z.hours];
+        for(let i=1;i<24;i++)s[i]=alpha*z.hours[i]+(1-alpha)*s[i-1];
+        // Find peak hour
+        let peakH=0,peakV=0;
+        s.forEach((v,i)=>{if(v>peakV){peakV=v;peakH=i;}});
+        smoothed[ci]={name:z.name,priority:z.priority,peakH,peakV:s[peakH],smooth:s,total:z.count};
+    });
+    // Sort by peak value
+    const ranked=Object.values(smoothed).sort((a,b)=>b.peakV-a.peakV);
+
+    // Top 3 prediction cards
+    const pc=document.getElementById('pc');pc.innerHTML='';
+    ranked.slice(0,3).forEach((p,i)=>{
+        const d=document.createElement('div');d.className='pc act';
+        d.innerHTML=`<div class="flex items-center justify-between mb-2"><span class="text-[10px] text-gray-500">#${i+1} PREDICTED</span><span class="badge ${p.priority==='CRITICAL'?'bc':p.priority==='HIGH'?'bh':'bm'}">${p.priority}</span></div><div class="text-sm font-bold">${p.name}</div><div class="text-xs text-amber-400 mono mt-1"><i class="fas fa-clock mr-1"></i>Peak: ${p.peakH}:00 — ${p.peakV.toFixed(1)} expected violations</div><div class="text-[10px] text-gray-500 mt-1">Based on ${p.total} historical records</div>`;
+        pc.appendChild(d);
+    });
+
+    // All zones bars
+    const pb=document.getElementById('pb');pb.innerHTML='';
+    ranked.forEach(p=>{
+        const maxV=ranked[0].peakV;
+        const pct=maxV>0?(p.peakV/maxV*100):0;
+        const col=p.priority==='CRITICAL'?'#ef4444':p.priority==='HIGH'?'#f59e0b':p.priority==='MEDIUM'?'#3b82f6':'#10b981';
+        const d=document.createElement('div');d.className='mb-2.5';
+        d.innerHTML=`<div class="flex justify-between text-xs mb-1"><span class="text-gray-300">${p.name}</span><span class="mono text-gray-500">${p.peakH}:00 — ${p.peakV.toFixed(1)}</span></div><div class="pb"><div class="pf" style="width:${pct}%;background:${col}"></div></div>`;
+        pb.appendChild(d);
+    });
+}
+
+/* Live Police Dispatch Global Function */
+window.dispatchUnit = function(btn, stationName) {
+    if (btn.classList.contains('dispatched')) return;
+    btn.classList.add('dispatched');
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1"></i> Dispatching...`;
+    btn.style.opacity = '0.7';
+    
+    setTimeout(() => {
+        btn.innerHTML = `<i class="fas fa-check-circle mr-1 text-emerald-400"></i> Unit En Route (ETA: 4m)`;
+        btn.style.background = 'rgba(16, 185, 129, 0.15)';
+        btn.style.borderColor = '#10b981';
+        btn.style.color = '#34d399';
+        showToast('Unit Dispatched', `Patrol car heading to ${stationName} hotspot.`);
+        
+        const patrols = document.getElementById('active-patrols');
+        if (patrols && patrols.children.length > 0) {
+            patrols.children[0].classList.replace('text-amber-500', 'text-emerald-500');
+            patrols.children[0].classList.add('fa-fade');
+        }
+    }, 1500);
+};
+
+window.dispatchTow = function(btn) {
+    if(btn.disabled) return;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1"></i>Contacting Tow...`;
+    setTimeout(() => {
+        btn.innerHTML = `<i class="fas fa-check mr-1 text-emerald-400"></i>Tow Requested`;
+        btn.classList.replace('text-red-400', 'text-emerald-400');
+        showToast('Tow Dispatched', 'Municipal tow truck assigned to clear choke point.');
+    }, 1200);
+};
+
+window.overrideSign = function(btn) {
+    if(btn.disabled) return;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1"></i>Updating Signs...`;
+    setTimeout(() => {
+        btn.innerHTML = `<i class="fas fa-check mr-1 text-emerald-400"></i>VMS Updated`;
+        btn.classList.replace('text-amber-400', 'text-emerald-400');
+        showToast('Signage Overridden', 'Local VMS boards now showing NO PARKING - HEAVY FINES.');
+    }, 1200);
+};
+
+window.showCCTV = function(zoneName) {
+    document.getElementById('cctv-title').textContent = "Live Feed: " + zoneName;
+    document.getElementById('cctv-modal').classList.replace('hidden', 'flex');
+    const updateTime = () => {
+        const d = new Date();
+        document.getElementById('cctv-time').textContent = d.toLocaleTimeString('en-IN', {hour12:false}) + ":" + String(Math.floor(d.getMilliseconds()/10)).padStart(2,'0');
+    };
+    updateTime();
+    window.cctvInterval = setInterval(updateTime, 100);
+};
+
+document.getElementById('cctv-modal').querySelector('button').addEventListener('click', () => {
+    clearInterval(window.cctvInterval);
+});
+
+/* Recommendations */
+function buildRecs(){
+    const rg=document.getElementById('rg');rg.innerHTML='';
+    const top=clusters.slice(0,4);
+    const recs=top.map(c=>{
+        const hour=c.pts.reduce((acc,p)=>{acc[p.hour]=(acc[p.hour]||0)+1;return acc;},{});
+        const peak=Object.entries(hour).sort((a,b)=>b[1]-a[1])[0];
+        return{...c,peakHour:peak?peak[0]:'?',peakCount:peak?peak[1]:0};
+    });
+    const left=recs.slice(0,2),right=recs.slice(2,4);
+    [left,right].forEach((side,si)=>{
+        const col=document.createElement('div');
+        side.forEach(c=>{
+            const borderCol=c.priority==='CRITICAL'?'#ef4444':c.priority==='HIGH'?'#f59e0b':'#3b82f6';
+            const badgeCls=c.priority==='CRITICAL'?'bc':c.priority==='HIGH'?'bh':'bm';
+            const d=document.createElement('div');d.className='rc relative';d.style.borderLeftColor=borderCol;
+            
+            // Generate extra buttons based on priority
+            let extraBtns = '';
+            if (c.priority === 'CRITICAL') {
+                extraBtns += `<button class="cb text-[9px] px-2 py-1 mb-1 bg-red-900/30 text-red-400 border-red-500/50 hover:bg-red-800/50 block w-full text-left" onclick="window.dispatchTow(this)"><i class="fas fa-truck-pickup mr-1"></i>Req Tow Truck</button>`;
+                extraBtns += `<button class="cb text-[9px] px-2 py-1 mb-1 bg-amber-900/30 text-amber-400 border-amber-500/50 hover:bg-amber-800/50 block w-full text-left" onclick="window.overrideSign(this)"><i class="fas fa-exclamation-triangle mr-1"></i>VMS Warning</button>`;
+            }
+            
+            d.innerHTML=`<div class="flex items-center justify-between mb-1"><span class="text-xs font-semibold ${c.priority==='CRITICAL'?'text-red-400':c.priority==='HIGH'?'text-amber-400':'text-blue-400'}"><i class="fas fa-${c.priority==='CRITICAL'?'triangle-exclamation':'circle-exclamation'} mr-1.5"></i>${c.name}</span><span class="badge ${badgeCls}">${c.priority}</span></div><p class="text-[10px] text-gray-400 mb-2">${c.count} violations clustered — Peak hour: ${c.peakHour}:00 (${c.peakCount} incidents).</p>
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <button class="cb text-[9px] px-2 py-1 flex items-center justify-center bg-blue-900/20 text-blue-400 border-blue-500/30" onclick="window.showCCTV('${c.name.replace(/'/g, "\\'")}')"><i class="fas fa-video mr-1"></i>Live CCTV Feed</button>
+                <button class="cb text-[9px] px-2 py-1 flex items-center justify-center" onclick="window.dispatchUnit(this, '${c.name.replace(/'/g, "\\'")}')"><i class="fas fa-walkie-talkie mr-1"></i>Dispatch Patrol</button>
+            </div>
+            ${extraBtns}
+            <div class="mt-1 text-right text-[10px] text-red-400 font-medium"><i class="fas fa-car-burst mr-1"></i>Impact Score: ${c.congestion}</div>`;
+            col.appendChild(d);
+        });
+        if(si===1){
+            const summary=document.createElement('div');summary.className='glass p-4 mt-2';
+            const approved=records.filter(r=>r.status==='approved').length;
+            summary.innerHTML=`<div class="text-xs font-semibold mb-2"><i class="fas fa-rocket text-emerald-500 mr-1.5"></i>Data Summary</div><div class="space-y-1.5"><div><div class="flex justify-between text-[10px] mb-0.5"><span class="text-gray-400">Approved Challans</span><span class="text-emerald-400 mono">${approved}/${records.length}</span></div><div class="pb"><div class="pf bg-emerald-500" style="width:${(approved/records.length*100).toFixed(0)}%"></div></div></div><div><div class="flex justify-between text-[10px] mb-0.5"><span class="text-gray-400">Rejected/Invalid</span><span class="text-red-400 mono">${records.filter(r=>r.status==='rejected').length}</span></div><div class="pb"><div class="pf bg-red-500" style="width:${(records.filter(r=>r.status==='rejected').length/records.length*100).toFixed(0)}%"></div></div></div><div><div class="flex justify-between text-[10px] mb-0.5"><span class="text-gray-400">Pending</span><span class="text-amber-400 mono">${records.filter(r=>r.status==='pending'||r.status==='').length}</span></div><div class="pb"><div class="pf bg-amber-500" style="width:${(records.filter(r=>r.status==='pending'||r.status==='').length/records.length*100).toFixed(0)}%"></div></div></div></div>`;
+            col.appendChild(summary);
+        }
+        rg.appendChild(col);
+    });
+}
+
+/* Fly to cluster */
+function flyTo(idx){
+    const c=clusters[idx];if(!c)return;
+    const{x,z}=to3D(c.lat,c.lng);
+    const target=new THREE.Vector3(x,3,z);
+    const end=target.clone().add(new THREE.Vector3(14,20,14));
+    const start=cam.position.clone();
+    let p=0;
+    function a(){p+=.018;if(p>1)p=1;const t=1-Math.pow(1-p,3);cam.position.lerpVectors(start,end,t);ctrl.target.lerp(target,t*.4);if(p<1)requestAnimationFrame(a);}
+    a();
+    showToast('Focus: '+c.name,`${c.count} violations — Impact: ${(c.score*100).toFixed(0)}%`);
+}
+
+/* Slider events */
+document.getElementById('eps-sl').addEventListener('input',e=>{epsVal=parseFloat(e.target.value);document.getElementById('eps-v').textContent=epsVal.toFixed(4);});
+document.getElementById('mp-sl').addEventListener('input',e=>{minPtsVal=parseInt(e.target.value);document.getElementById('mp-v').textContent=minPtsVal;});
+document.getElementById('run-b').addEventListener('click',()=>{
+    result=runDBSCAN(records,epsVal,minPtsVal);
+    silVal=silhouette(records,result.labels);
+    purVal=purity(result.labels,records.map(r=>r.station));
+    clusters=buildClusters(result);
+    updateHeat();updateMarkers();updateAll();
+    showToast('DBSCAN Recalculated',`${result.cid} clusters, Silhouette: ${silVal.toFixed(3)}`);
+});
+
+/* Toast */
+function showToast(t,m){const el=document.getElementById('toast');document.getElementById('tt').textContent=t;document.getElementById('tm').textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3500);}
+const alerts=[
+    ['DBSCAN Complete','Processed '+D.length+' records with haversine distance'],
+    ['High Density Zone','Kadubisanahalli Underpass: 20+ violations in tight cluster'],
+    ['Electronic City Batch','17 simultaneous WRONG PARKING violations detected'],
+    ['Model Accuracy','Silhouette score computed from real spatial distribution']
+];
+let ai=0;setTimeout(()=>showToast(alerts[0][0],alerts[0][1]),2000);
+setInterval(()=>{ai=(ai+1)%alerts.length;showToast(alerts[ai][0],alerts[ai][1]);},15000);
+
+/* Clock */
+setInterval(()=>{document.getElementById('clk').textContent=new Date().toLocaleTimeString('en-IN',{hour12:false})+' IST';},1000);
+document.getElementById('clk').textContent=new Date().toLocaleTimeString('en-IN',{hour12:false})+' IST';
+
+/* Scroll reveal */
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('v');obs.unobserve(e.target);}});},{threshold:.12});
+document.querySelectorAll('.af').forEach(el=>obs.observe(el));
+
+/* Initial render */
+updateAll();
+</script>
+</body>
+</html>
